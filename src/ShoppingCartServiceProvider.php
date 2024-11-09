@@ -1,11 +1,11 @@
 <?php
 
-namespace Mahmudulhsn\LaraSimpleShoppingCart;
+namespace Mahmudulhsn\ShoppingCart;
 
 use Illuminate\Support\ServiceProvider;
-use Mahmudulhsn\LaraSimpleShoppingCart\Cart;
+use Mahmudulhsn\ShoppingCart\Cart;
 
-class SimpleShoppingCartServiceProvider extends ServiceProvider
+class ShoppingCartServiceProvider extends ServiceProvider
 {
     /**
      * Register any application services.
@@ -20,7 +20,7 @@ class SimpleShoppingCartServiceProvider extends ServiceProvider
         });
 
         // Alias the 'cart' binding for easy access via facade
-        $this->app->alias('cart', \Mahmudulhsn\LaraSimpleShoppingCart\Facades\CartFacade::class);
+        $this->app->alias('cart', \Mahmudulhsn\ShoppingCart\Facades\CartFacade::class);
     }
 
     /**
@@ -30,7 +30,7 @@ class SimpleShoppingCartServiceProvider extends ServiceProvider
     {
         // Publish the configuration file for customization
         $this->publishes([
-            __DIR__ . '/../config/lara_simple_shopping_cart.php' => config_path('lara_simple_shopping_cart.php')
+            __DIR__ . '/../config/shopping_cart.php' => config_path('shopping_cart.php')
         ], 'lara-simple-shopping-cart-config');
     }
 

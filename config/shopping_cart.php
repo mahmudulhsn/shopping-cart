@@ -15,10 +15,10 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | LaraSimpleShoppingCart database settings
+    | ShoppingCart database settings
     |--------------------------------------------------------------------------
     |
-    | Here you can set the connection that the LaraSimpleShoppingCart should use when
+    | Here you can set the connection that the ShoppingCart should use when
     | storing and restoring a cart.
     |
     */
@@ -42,7 +42,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | LaraSimpleShoppingCart storage settings
+    | ShoppingCart storage settings
     |--------------------------------------------------------------------------
     |
     | Here you can set the storage type whether it will store in session or database

@@ -1,6 +1,6 @@
 <?php
 
-namespace Mahmudulhsn\LaraSimpleShoppingCart;
+namespace Mahmudulhsn\ShoppingCart;
 
 class CartHelper
 {

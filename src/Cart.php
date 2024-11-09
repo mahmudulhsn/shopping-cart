@@ -1,9 +1,9 @@
 <?php
 
-namespace Mahmudulhsn\LaraSimpleShoppingCart;
+namespace Mahmudulhsn\ShoppingCart;
 
 use Illuminate\Support\Collection;
-use Mahmudulhsn\LaraSimpleShoppingCart\CartHelper;
+use Mahmudulhsn\ShoppingCart\CartHelper;
 
 class Cart
 {

@@ -11,7 +11,7 @@
   "license": "MIT",
   "autoload": {
     "psr-4": {
-      "Mahmudulhsn\\LaraSimpleShoppingCart\\": "src/"
+      "Mahmudulhsn\\ShoppingCart\\": "src/"
     }
   },
   "authors": [
@@ -31,7 +31,7 @@
   "extra": {
     "laravel": {
       "providers": [
-        "Mahmudulhsn\\LaraSimpleShoppingCart\\SimpleShoppingCartServiceProvider"
+        "Mahmudulhsn\\ShoppingCart\\ShoppingCartServiceProvider"
       ]
     }
   }

@@ -8,16 +8,26 @@ Install the package through [Composer](http://getcomposer.org/).
 
 Run the Composer require command from the Terminal:
 
-    composer require mahmudulhsn/lara-simple-shopping-cart
+    composer require mahmudulhsn/shopping-cart
     
 Run this command for publishing the provider.
     
-    php artisan vendor:publish --provider="Mahmudulhsn\ShoppingCart\SimpleShoppingCartServiceProvider"
+    php artisan vendor:publish --provider="Mahmudulhsn\ShoppingCart\ShoppingCartServiceProvider"
 
-Run this command for publishing the config. You can change the config according to you needs.
+Run this command for publishing the config. You can change the config according to you needs.(Optional) 
     
-    php artisan vendor:publish --tag="lara-simple-shopping-cart-config"
+    php artisan vendor:publish --tag="shopping-cart-config"
 
+You can add alias in the `config/app.php` or you can use this namespace given below.
+```php
+'aliases' => [
+        // Other aliases...
+        'Cart' => Mahmudulhsn\ShoppingCart\Facades\CartFacade::class,
+    ],
+```
+or
+
+    use Mahmudulhsn\ShoppingCart\Facades\CartFacade as Cart;
 
 ## Overview
 Look at one of the following topics to learn more about LarSimpleShoppingCart
@@ -111,4 +121,34 @@ The `total()` method can be used to get the calculated total of all items in the
 
 ```php
 Cart::total();
+```
+### Cart::subtotal()
+
+The `subtotal()` method can be used to get the total of all items in the cart, minus the total amount of tax. 
+
+```php
+Cart::subtotal();
+```
+### Cart::applyDiscount()
+
+The `applyDiscount()` method can be used to get the total of all items in the cart. This will take two parameters first parameter will be flat amount or percentage, second parameter will be discount type that is `fix` or `percentage`. By default it will take `fix` as second parameter.
+
+```php
+Cart::applyDiscount(500); 
+```
+or
+```php
+Cart::applyDiscount(500, 'fix'); 
+```
+For percentage discount, you have to pass `percentage` as second parameter and amount must be equal or less than 100.
+
+```php
+Cart::applyDiscount(10, 'percentage'); 
+```
+### Cart::discount()
+
+The `discount()` method can be used to get the total amount of discount of all items.
+
+```php
+Cart::discount(); //200
 ```

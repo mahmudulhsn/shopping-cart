@@ -1,6 +1,6 @@
 <?php
 
-namespace Mahmudulhsn\LaraSimpleShoppingCart\Facades;
+namespace Mahmudulhsn\ShoppingCart\Facades;
 
 use Illuminate\Support\Facades\Facade;
 
