@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'session_key' => env('SHOPPING_CART_SESSION_KEY', md5(config('app.name'))),
     /*
         |--------------------------------------------------------------------------
         | Default tax rate
@@ -49,6 +50,6 @@ return [
     | Type would be form: session, database
     |
     */
-    'storage_type' => 'session'
+    'storage_type' => 'session',
 
 ];

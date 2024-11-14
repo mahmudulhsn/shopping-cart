@@ -4,6 +4,8 @@ namespace Mahmudulhsn\ShoppingCart;
 
 use Illuminate\Support\Collection;
 use Mahmudulhsn\ShoppingCart\CartHelper;
+use Mahmudulhsn\ShoppingCart\Exceptions\CartException;
+use Mahmudulhsn\ShoppingCart\Repositories\SessionRepository;
 
 class Cart
 {
@@ -18,13 +20,20 @@ class Cart
     protected CartHelper $cartHelper;
 
     /**
+     * @var SessionRepository Session repository for session interactions.
+     */
+    protected SessionRepository $sessionRepository;
+
+    /**
      * Cart constructor.
      *
-     * @param string $rootSessionKey Root session key.
-     * @param CartHelper $cartHelper Instance of CartHelper.
+     * @param  SessionRepository  $sessionRepository  Instance of SessionRepository.
+     * @param  string  $rootSessionKey  Root session key.
+     * @param  CartHelper  $cartHelper  Instance of CartHelper.
      */
-    public function __construct(string $rootSessionKey, CartHelper $cartHelper)
+    public function __construct(SessionRepository $sessionRepository, string $rootSessionKey, CartHelper $cartHelper)
     {
+        $this->sessionRepository = $sessionRepository;
         $this->rootSessionKey = $rootSessionKey;
         $this->cartHelper = $cartHelper;
     }
@@ -32,18 +41,18 @@ class Cart
     /**
      * Add product to cart.
      *
-     * @param string $id Product ID.
-     * @param string $name Product name.
-     * @param float $price Product price.
-     * @param int|float $quantity Product quantity.
-     * @param array $extraInfo Additional product info.
+     * @param  string  $id  Product ID.
+     * @param  string  $name  Product name.
+     * @param  float  $price  Product price.
+     * @param  int|float  $quantity  Product quantity.
+     * @param  array  $extraInfo  Additional product info.
      * @return object Added product as an object.
      */
     public function add(string $id, string $name, float $price, int|float $quantity, array $extraInfo = []): object
     {
         $rowId = $this->cartHelper->generateRowId($id, [$id, $name, $price, $quantity]);
         $quantity = max(1, $quantity); // Ensure quantity is at least 1
-        $products = session()->get("{$this->rootSessionKey}.products", []);
+        $products = $this->sessionRepository->get("{$this->rootSessionKey}.products", []);
 
         $products[$rowId] = [
             'rowId' => $rowId,
@@ -58,7 +67,7 @@ class Cart
             $products[$rowId]['extraInfo'] = $extraInfo;
         }
 
-        session()->put("{$this->rootSessionKey}.products", $products);
+        $this->sessionRepository->put("{$this->rootSessionKey}.products", $products);
         $this->cartHelper->updateTotal($this->rootSessionKey);
 
         return $this->get($rowId);
@@ -67,26 +76,28 @@ class Cart
     /**
      * Get single product details by row ID.
      *
-     * @param string $rowId Row ID of the product.
+     * @param  string  $rowId  Row ID of the product.
      * @return object|null Product as an object or null if not found.
      */
     public function get(string $rowId): ?object
     {
-        $products = session()->get("{$this->rootSessionKey}.products", []);
+        $products = $this->sessionRepository->get("{$this->rootSessionKey}.products", []);
+
         return isset($products[$rowId]) ? (object) $products[$rowId] : null;
     }
 
     /**
      * Update cart item by row ID.
      *
-     * @param string $rowId Row ID of the product.
-     * @param array $productData Data to update (quantity, price, extraInfo).
+     * @param  string  $rowId  Row ID of the product.
+     * @param  array  $productData  Data to update (quantity, price, extraInfo).
      * @return object Updated product as an object.
-     * @throws \Exception If product is not found in cart.
+     *
+     * @throws CartException If product is not found in cart.
      */
     public function update(string $rowId, array $productData): object
     {
-        $products = session()->get("{$this->rootSessionKey}.products", []);
+        $products = $this->sessionRepository->get("{$this->rootSessionKey}.products", []);
         if (array_key_exists($rowId, $products)) {
             $quantity = $productData['quantity'] ?? $products[$rowId]['quantity'];
             $price = $productData['price'] ?? $products[$rowId]['price'];
@@ -99,30 +110,31 @@ class Cart
                 $products[$rowId]['extraInfo'] = $productData['extraInfo'];
             }
 
-            session()->put("{$this->rootSessionKey}.products", $products);
+            $this->sessionRepository->put("{$this->rootSessionKey}.products", $products);
             $this->cartHelper->updateTotal($this->rootSessionKey);
 
             return $this->get($rowId);
         }
 
-        throw new \Exception("Product with row ID {$rowId} not found in cart.");
+        throw new CartException("Product with row ID {$rowId} not found in cart.");
     }
 
     /**
      * Remove item from cart by row ID.
      *
-     * @param string $rowId Row ID of the product to remove.
-     * @throws \Exception If product is not found in cart.
+     * @param  string  $rowId  Row ID of the product to remove.
+     *
+     * @throws CartException If product is not found in cart.
      */
     public function remove(string $rowId): void
     {
-        $products = session()->get("{$this->rootSessionKey}.products", []);
+        $products = $this->sessionRepository->get("{$this->rootSessionKey}.products", []);
         if (array_key_exists($rowId, $products)) {
             unset($products[$rowId]);
-            session()->put("{$this->rootSessionKey}.products", $products);
+            $this->sessionRepository->put("{$this->rootSessionKey}.products", $products);
             $this->cartHelper->updateTotal($this->rootSessionKey);
         } else {
-            throw new \Exception("Product with row ID {$rowId} not found in cart.");
+            throw new CartException("Product with row ID {$rowId} not found in cart.");
         }
     }
 
@@ -131,10 +143,10 @@ class Cart
      */
     public function destroy(): void
     {
-        session()->put("{$this->rootSessionKey}.products", []);
-        session()->put("{$this->rootSessionKey}.total", 0);
-        session()->put("{$this->rootSessionKey}.subtotal", 0);
-        session()->put("{$this->rootSessionKey}.discount", 0);
+        $this->sessionRepository->put("{$this->rootSessionKey}.products", []);
+        $this->sessionRepository->put("{$this->rootSessionKey}.total", 0);
+        $this->sessionRepository->put("{$this->rootSessionKey}.subtotal", 0);
+        $this->sessionRepository->put("{$this->rootSessionKey}.discount", 0);
     }
 
     /**
@@ -144,7 +156,7 @@ class Cart
      */
     public function total(): int|float
     {
-        return session()->get("{$this->rootSessionKey}.total", 0);
+        return $this->sessionRepository->get("{$this->rootSessionKey}.total", 0);
     }
 
     /**
@@ -154,7 +166,7 @@ class Cart
      */
     public function subtotal(): int|float
     {
-        return session()->get("{$this->rootSessionKey}.subtotal", 0);
+        return $this->sessionRepository->get("{$this->rootSessionKey}.subtotal", 0);
     }
 
     /**
@@ -164,7 +176,7 @@ class Cart
      */
     public function discountTotal(): int|float
     {
-        return session()->get("{$this->rootSessionKey}.discount", 0);
+        return $this->sessionRepository->get("{$this->rootSessionKey}.discount", 0);
     }
 
     /**
@@ -174,15 +186,16 @@ class Cart
      */
     public function content(): Collection
     {
-        $products = session()->get("{$this->rootSessionKey}.products", []);
+        $products = $this->sessionRepository->get("{$this->rootSessionKey}.products", []);
+
         return collect($products);
     }
 
     /**
      * Apply discount to the entire cart.
      *
-     * @param int|float $amount Discount amount to apply.
-     * @param string|null $discountType Type of discount (e.g., 'fix' or 'percentage').
+     * @param  int|float  $amount  Discount amount to apply.
+     * @param  string|null  $discountType  Type of discount (e.g., 'fix' or 'percentage').
      */
     public function applyDiscount(int|float $amount, ?string $discountType = 'fix'): void
     {
