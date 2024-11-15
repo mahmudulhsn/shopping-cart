@@ -48,7 +48,7 @@ class Cart
      * @param  array  $extraInfo  Additional product info.
      * @return object Added product as an object.
      */
-    public function add(string $id, string $name, float $price, int|float $quantity, array $extraInfo = []): object
+    public function add(string $id, string $name, float $price, int|float $quantity, array $extraInfo = []): void
     {
         $rowId = $this->cartHelper->generateRowId($id, [$id, $name, $price, $quantity]);
         $quantity = max(1, $quantity); // Ensure quantity is at least 1
@@ -69,8 +69,6 @@ class Cart
 
         $this->sessionRepository->put("{$this->rootSessionKey}.products", $products);
         $this->cartHelper->updateTotal($this->rootSessionKey);
-
-        return $this->get($rowId);
     }
 
     /**

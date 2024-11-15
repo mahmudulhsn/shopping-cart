@@ -4,7 +4,7 @@ namespace Mahmudulhsn\ShoppingCart\Contracts;
 
 interface CartContract
 {
-    public function add(string $id, string $name, float $price, int|float $quantity, array $extraInfo = []): object;
+    public function add(string $id, string $name, float $price, int|float $quantity, array $extraInfo = []): void;
 
     public function get(string $rowId): ?object;
 
