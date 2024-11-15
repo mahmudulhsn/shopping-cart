@@ -18,7 +18,7 @@ Run this command for publishing the config. You can change the config according 
     
     php artisan vendor:publish --tag="shopping-cart-config"
 
-You can add alias in the `config/app.php` or you can use this namespace given below.
+You can add alias in the `config/app.php` or you can use this namespace given below (Optional).
 ```php
 'aliases' => [
         // Other aliases...
@@ -30,7 +30,7 @@ or
     use Mahmudulhsn\ShoppingCart\Facades\CartFacade as Cart;
 
 ## Overview
-Look at one of the following topics to learn more about LarSimpleShoppingCart
+Look at one of the following topics to learn more about ShoppingCart
 
 * [Usage](#usage)
 
@@ -53,8 +53,6 @@ As an optional fifth parameter you can pass extra info as an array.
 ```php
 Cart::add('293ad', 'Product 1', 1, 9.99, ['color' => 'Red', 'size' => 'XL']);
 ```
-
-**The `add()` method will return an CartItem instance of the item you just added to the cart.**
 
 ### Cart::update()
 
