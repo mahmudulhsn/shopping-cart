@@ -36,7 +36,7 @@ class ShoppingCartServiceProvider extends ServiceProvider
     {
 
         $this->publishes([
-            __DIR__.'/../config/shopping_cart.php' => config_path('shopping_cart.php'),
+            __DIR__ . '/../config/shopping_cart.php' => config_path('shopping_cart.php'),
         ], 'lara-simple-shopping-cart-config');
     }
 
@@ -53,7 +53,7 @@ class ShoppingCartServiceProvider extends ServiceProvider
      */
     protected function initializeSession(SessionRepository $sessionRepository, string $rootSessionKey): void
     {
-        if (! $sessionRepository->get($rootSessionKey)) {
+        if (!$sessionRepository->get($rootSessionKey)) {
             $sessionRepository->put($rootSessionKey, [
                 'products' => [],
                 'discount_type' => 'fix',

@@ -103,7 +103,6 @@ class CartHelper
         $products[$rowId]['price'] = $price;
         $products[$rowId]['quantity'] = $quantity;
         $products[$rowId]['subtotal'] = $quantity * $price;
-
         if (!empty($extraInfo)) {
             $products[$rowId]['extraInfo'] = $extraInfo;
         }

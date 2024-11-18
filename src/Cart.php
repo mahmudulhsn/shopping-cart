@@ -48,10 +48,9 @@ class Cart
      */
     public function add($id, $name, $price, $quantity, $extraInfo = []): void
     {
-        $rowId = $this->cartHelper->generateRowId($id, [$id, $name, $price, $quantity]);
+        $rowId = $this->cartHelper->generateRowId($id, [$id, $name]);
         $quantity = max(1, $quantity);
-
-        $products = $this->cartHelper->getSessionData("{$this->rootSessionKey}." . self::SESSION_PRODUCTS, []);
+        $products = $this->cartHelper->getSessionData("{$this->rootSessionKey}." . self::SESSION_PRODUCTS);
 
         if (isset($products[$rowId])) {
             $newQuantity = $products[$rowId]['quantity'] + $quantity;
@@ -67,7 +66,6 @@ class Cart
                 'extraInfo' => $extraInfo,
             ];
         }
-
 
         $this->sessionRepository->put("{$this->rootSessionKey}." . self::SESSION_PRODUCTS, $products);
         $this->cartHelper->updateTotal($this->rootSessionKey);
