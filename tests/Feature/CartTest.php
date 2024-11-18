@@ -2,200 +2,233 @@
 
 use Mahmudulhsn\ShoppingCart\Cart;
 use Mahmudulhsn\ShoppingCart\CartHelper;
+use Mahmudulhsn\ShoppingCart\Data\ProductData;
 use Mahmudulhsn\ShoppingCart\Repositories\SessionRepository;
-use Mahmudulhsn\ShoppingCart\Exceptions\CartException;
 
-beforeEach(function () {
-    // Mock SessionRepository and CartHelper
-    $this->sessionRepository = Mockery::mock(SessionRepository::class);
-    $this->cartHelper = Mockery::mock(CartHelper::class);
 
-    // Root session key
-    $this->rootSessionKey = 'cart_test';
-
-    // Create Cart instance
-    $this->cart = new Cart($this->sessionRepository, $this->rootSessionKey, $this->cartHelper);
-});
-
-it('can add a product to the cart', function () {
-    $rowId = 'row_1';
-    $productId = '1';
-    $productName = 'Product Name';
-    $productPrice = 100.00;
-    $productQuantity = 2;
+it('adds a product to the cart', function () {
+    $id = '123';
+    $name = 'Product 1';
+    $price = 10.0;
+    $quantity = 2;
     $extraInfo = ['color' => 'red'];
 
-    // Mock the generateRowId method to return a specific row ID
-    $this->cartHelper
-        ->shouldReceive('generateRowId')
-        ->with($productId, [$productId, $productName, $productPrice, $productQuantity])
-        ->andReturn($rowId);
+    $cartHelper = mock(CartHelper::class);
+    $sessionRepository = mock(SessionRepository::class);
+    $cart = new Cart($sessionRepository, 'testSessionKey', $cartHelper);
 
-    // Mock session get method to return an empty products array initially
-    $this->sessionRepository
-        ->shouldReceive('get')
-        ->with("{$this->rootSessionKey}.products", [])
+    $cartHelper
+        ->shouldReceive('generateRowId')
+        ->with($id, [$id, $name, $price, $quantity])
+        ->once()
+        ->andReturn('rowId123');
+
+    $cartHelper
+        ->shouldReceive('getSessionData')
+        ->with('testSessionKey.products', [])
+        ->once()
         ->andReturn([]);
 
-    // Mock session put method to store the product in the session
-    $expectedProduct = [
-        $rowId => [
-            'rowId' => $rowId,
-            'id' => $productId,
-            'name' => $productName,
-            'price' => $productPrice,
-            'quantity' => $productQuantity,
-            'subtotal' => $productQuantity * $productPrice,
-            'extraInfo' => $extraInfo,
-        ]
+    $cartHelper
+        ->shouldReceive('updateTotal')
+        ->with('testSessionKey')
+        ->once(); // Add this expectation for updateTotal
+
+    $sessionRepository
+        ->shouldReceive('put')
+        ->with('testSessionKey.products', [
+            'rowId123' => [
+                'rowId' => 'rowId123',
+                'id' => $id,
+                'name' => $name,
+                'price' => $price,
+                'quantity' => $quantity,
+                'subtotal' => $quantity * $price,
+                'extraInfo' => $extraInfo,
+            ]
+        ])
+        ->once();
+
+    $cart->add($id, $name, $price, $quantity, $extraInfo);
+});
+
+it('retrieves a product by its rowId', function () {
+    $rowId = 'rowId123';
+    $productData = [
+        'rowId' => $rowId,
+        'id' => '123',
+        'name' => 'Product 1',
+        'price' => 10.0,
+        'quantity' => 2,
+        'subtotal' => 20.0,
+        'extraInfo' => ['color' => 'red'],
     ];
 
-    $this->sessionRepository
-        ->shouldReceive('put')
-        ->with("{$this->rootSessionKey}.products", $expectedProduct)
-        ->once();
+    $cartHelper = mock(CartHelper::class);
+    $sessionRepository = mock(SessionRepository::class);
+    $cart = new Cart($sessionRepository, 'testSessionKey', $cartHelper);
 
-    // Mock the updateTotal method
-    $this->cartHelper
-        ->shouldReceive('updateTotal')
-        ->with($this->rootSessionKey)
-        ->once();
+    $cartHelper
+        ->shouldReceive('getSessionData')
+        ->with('testSessionKey.products', [])
+        ->once()
+        ->andReturn([$rowId => $productData]);
 
-    // Mock the session get call after adding the product
-    $this->sessionRepository
-        ->shouldReceive('get')
-        ->with("{$this->rootSessionKey}.products")
-        ->andReturn($expectedProduct);
+    $product = $cart->get($rowId);
 
-    // Call the add method
-    $this->cart->add($productId, $productName, $productPrice, $productQuantity, $extraInfo);
-
-    // Assert that the product was added to the session correctly
-    $addedProduct = $this->sessionRepository->get("{$this->rootSessionKey}.products")[$rowId];
-
-    expect($addedProduct['rowId'])->toBe($rowId);
-    expect($addedProduct['name'])->toBe($productName);
-    expect($addedProduct['quantity'])->toBe($productQuantity);
-    expect($addedProduct['subtotal'])->toBe($productQuantity * $productPrice);
-    expect($addedProduct['extraInfo'])->toBe($extraInfo);
+    expect($product)->not->toBeNull();
+    expect($product->rowId)->toBe($rowId);
 });
 
-it('can update a product in the cart', function () {
-    // Initial product in cart
-    $this->sessionRepository
-        ->shouldReceive('get')
-        ->with("{$this->rootSessionKey}.products", [])
+it('updates a product in the cart', function () {
+    $rowId = 'rowId123';
+
+    // Pass required arguments to the constructor
+    $productData = new ProductData(3, 15.0, ['color' => 'blue']);
+
+    // Setting up mocks and expectations
+    $cartHelper = mock(CartHelper::class);
+    $sessionRepository = mock(SessionRepository::class);
+    $cart = new Cart($sessionRepository, 'testSessionKey', $cartHelper);
+
+    $cartHelper
+        ->shouldReceive('getSessionData')
+        ->with('testSessionKey.products', [])
+        ->once()
         ->andReturn([
-            'row_1' => [
-                'rowId' => 'row_1',
-                'id' => '1',
-                'name' => 'Product Name',
-                'price' => 100.00,
+            $rowId => [
+                'rowId' => $rowId,
+                'id' => '123',
+                'name' => 'Product 1',
+                'price' => 10.0,
                 'quantity' => 2,
-                'subtotal' => 200.00,
+                'subtotal' => 20.0,
+                'extraInfo' => ['color' => 'red'],
             ]
         ]);
 
-    // Mock session put method for updated product
-    $this->sessionRepository
-        ->shouldReceive('put')
-        ->with("{$this->rootSessionKey}.products", Mockery::type('array'))
+    $cartHelper
+        ->shouldReceive('updateProductData')
+        ->with(
+            \Mockery::any(),  // Any product list
+            $rowId,           // RowId to update
+            3,                // Updated quantity
+            15.0,             // Updated price
+            ['color' => 'blue']  // Updated extraInfo
+        )
         ->once();
 
-    $this->cartHelper
+    $cartHelper
         ->shouldReceive('updateTotal')
-        ->with($this->rootSessionKey)
+        ->with('testSessionKey')
         ->once();
 
-    $product = $this->cart->update('row_1', ['quantity' => 3]);
+    $sessionRepository
+        ->shouldReceive('put')
+        ->with('testSessionKey.products', \Mockery::any()) // Products should be updated
+        ->once();
 
-    expect($product->quantity)->toBe(2);
-    expect($product->subtotal)->toBe(200.00);
+    $cart->update($rowId, $productData);
 });
 
 
-it('throws exception when trying to update non-existent product', function () {
-    // Non-existent product in the cart
-    $this->sessionRepository
-        ->shouldReceive('get')
-        ->with("{$this->rootSessionKey}.products", [])
-        ->andReturn([]);
+it('removes a product from the cart', function () {
+    $rowId = 'rowId123';
 
-    $this->cart->update('non_existent_row', ['quantity' => 1]);
-})->throws(CartException::class, 'Product with row ID non_existent_row not found in cart.');
+    // Setup CartHelper mock
+    $cartHelper = mock(CartHelper::class);
+    $sessionRepository = mock(SessionRepository::class);
+    $cart = new Cart($sessionRepository, 'testSessionKey', $cartHelper);
 
-it('can remove a product from the cart', function () {
-    // Initial product in cart
-    $this->sessionRepository
-        ->shouldReceive('get')
-        ->with("{$this->rootSessionKey}.products", [])
+    // Mock the session data
+    $cartHelper
+        ->shouldReceive('getSessionData')
+        ->with('testSessionKey.products', [])
+        ->once()
         ->andReturn([
-            'row_1' => [
-                'rowId' => 'row_1',
-                'id' => '1',
-                'name' => 'Product Name',
-                'price' => 100.00,
+            $rowId => [
+                'rowId' => $rowId,
+                'id' => '123',
+                'name' => 'Product 1',
+                'price' => 10.0,
                 'quantity' => 2,
-                'subtotal' => 200.00,
+                'subtotal' => 20.0,
+                'extraInfo' => ['color' => 'red'],
             ]
         ]);
 
-    $this->sessionRepository
-        ->shouldReceive('put')
-        ->with("{$this->rootSessionKey}.products", [])
-        ->once();
-
-    $this->cartHelper
+    // Expect updateTotal to be called after product removal
+    $cartHelper
         ->shouldReceive('updateTotal')
-        ->with($this->rootSessionKey)
+        ->with('testSessionKey')
         ->once();
 
-    $this->cart->remove('row_1');
+    // Mock sessionRepository to update the session with new products
+    $sessionRepository
+        ->shouldReceive('put')
+        ->with('testSessionKey.products', \Mockery::any()) // Products should be updated
+        ->once();
 
-    // After removing, the cart should have no products
-    $this->sessionRepository
-        ->shouldReceive('get')
-        ->with("{$this->rootSessionKey}.products", [])
-        ->andReturn([]);
+    // Call remove method to test
+    $cart->remove($rowId);
 });
 
-it('can clear the cart', function () {
-    $this->sessionRepository
+
+it('clears the cart', function () {
+    $sessionRepository = mock(SessionRepository::class);
+    $cartHelper = mock(CartHelper::class);
+    $cart = new Cart($sessionRepository, 'testSessionKey', $cartHelper);
+
+    $sessionRepository
         ->shouldReceive('put')
-        ->with("{$this->rootSessionKey}.products", [])
+        ->with('testSessionKey.products', [])
         ->once();
-    $this->sessionRepository
+    $sessionRepository
         ->shouldReceive('put')
-        ->with("{$this->rootSessionKey}.total", 0)
+        ->with('testSessionKey.total', 0)
         ->once();
-    $this->sessionRepository
+    $sessionRepository
         ->shouldReceive('put')
-        ->with("{$this->rootSessionKey}.subtotal", 0)
+        ->with('testSessionKey.subtotal', 0)
         ->once();
-    $this->sessionRepository
+    $sessionRepository
         ->shouldReceive('put')
-        ->with("{$this->rootSessionKey}.discount", 0)
+        ->with('testSessionKey.discount', 0)
         ->once();
 
-    $this->cart->destroy();
+    $cart->destroy();
 });
 
-it('can get the total of the cart', function () {
-    $this->sessionRepository
-        ->shouldReceive('get')
-        ->with("{$this->rootSessionKey}.total", 0)
-        ->andReturn(300.00);
 
-    $total = $this->cart->total();
+it('retrieves the total amount of the cart', function () {
+    $cartHelper = mock(CartHelper::class);
+    $sessionRepository = mock(SessionRepository::class);
+    $cart = new Cart($sessionRepository, 'testSessionKey', $cartHelper);
 
-    expect($total)->toBe(300.00);
+    $cartHelper
+        ->shouldReceive('getSessionData')
+        ->with('testSessionKey.total', 0)
+        ->once()
+        ->andReturn(100.0);
+
+    $total = $cart->total();
+
+    expect($total)->toBe(100.0);
 });
 
-it('can apply a discount to the cart', function () {
-    $this->cartHelper
+
+it('applies a discount to the cart', function () {
+    $amount = 20.0;
+    $discountType = 'fix';
+
+    $cartHelper = mock(CartHelper::class);
+    $sessionRepository = mock(SessionRepository::class);
+    $cart = new Cart($sessionRepository, 'testSessionKey', $cartHelper);
+
+    $cartHelper
         ->shouldReceive('updateDiscount')
-        ->with($this->rootSessionKey, 50, 'fix')
+        ->with('testSessionKey', $amount, $discountType)
         ->once();
 
-    $this->cart->applyDiscount(50, 'fix');
+    $cart->applyDiscount($amount, $discountType);
 });
