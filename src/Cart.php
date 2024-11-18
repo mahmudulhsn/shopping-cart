@@ -10,13 +10,19 @@ use Mahmudulhsn\ShoppingCart\Repositories\SessionRepository;
 class Cart
 {
     private const SESSION_PRODUCTS = 'products';
+
     private const SESSION_TOTAL = 'total';
+
     private const SESSION_SUBTOTAL = 'subtotal';
+
     private const SESSION_DISCOUNT = 'discount';
+
     private const DEFAULT_DISCOUNT_TYPE = 'fix';
 
     protected string $rootSessionKey;
+
     protected CartHelper $cartHelper;
+
     protected SessionRepository $sessionRepository;
 
     /**
@@ -36,12 +42,15 @@ class Cart
     {
         $rowId = $this->cartHelper->generateRowId($id, [$id, $name, $price, $quantity]);
         $quantity = max(1, $quantity);
+
         $products = $this->cartHelper->getSessionData("{$this->rootSessionKey}." . self::SESSION_PRODUCTS, []);
 
         if (isset($products[$rowId])) {
+
             $newQuantity = $products[$rowId]['quantity'] + $quantity;
             $this->cartHelper->updateProductData($products, $rowId, $newQuantity, $price, $extraInfo);
         } else {
+
             $products[$rowId] = [
                 'rowId' => $rowId,
                 'id' => $id,
@@ -54,24 +63,27 @@ class Cart
         }
 
         $this->sessionRepository->put("{$this->rootSessionKey}." . self::SESSION_PRODUCTS, $products);
+
         $this->cartHelper->updateTotal($this->rootSessionKey);
     }
 
     /**
-     * Get a single product details by row ID.
+     * Get details of a single product by its row ID.
      */
     public function get(string $rowId): ?object
     {
         $products = $this->cartHelper->getSessionData("{$this->rootSessionKey}." . self::SESSION_PRODUCTS, []);
+
         return isset($products[$rowId]) ? (object) $products[$rowId] : null;
     }
 
     /**
-     * Update a cart item by its row ID.
+     * Update a product in the cart by its row ID.
      */
     public function update(string $rowId, ProductData $productData): void
     {
         $products = $this->cartHelper->getSessionData("{$this->rootSessionKey}." . self::SESSION_PRODUCTS, []);
+
         if (!isset($products[$rowId])) {
             throw new CartException("Product with row ID {$rowId} not found in cart.");
         }
@@ -82,26 +94,29 @@ class Cart
 
         $this->cartHelper->updateProductData($products, $rowId, $quantity, $price, $extraInfo);
         $this->sessionRepository->put("{$this->rootSessionKey}." . self::SESSION_PRODUCTS, $products);
+
         $this->cartHelper->updateTotal($this->rootSessionKey);
     }
 
     /**
-     * Remove a product from the cart by row ID.
+     * Remove a product from the cart by its row ID.
      */
     public function remove(string $rowId): void
     {
         $products = $this->cartHelper->getSessionData("{$this->rootSessionKey}." . self::SESSION_PRODUCTS, []);
+
         if (!isset($products[$rowId])) {
             throw new CartException("Product with row ID {$rowId} not found in cart.");
         }
 
         unset($products[$rowId]);
         $this->sessionRepository->put("{$this->rootSessionKey}." . self::SESSION_PRODUCTS, $products);
+
         $this->cartHelper->updateTotal($this->rootSessionKey);
     }
 
     /**
-     * Clear the entire cart.
+     * Clear all products from the cart and reset totals.
      */
     public function destroy(): void
     {
@@ -128,7 +143,7 @@ class Cart
     }
 
     /**
-     * Get the discount amount applied to the cart.
+     * Get the discount applied to the cart.
      */
     public function discountTotal(): int|float
     {
@@ -141,7 +156,12 @@ class Cart
     public function content(): Collection
     {
         $products = $this->cartHelper->getSessionData("{$this->rootSessionKey}." . self::SESSION_PRODUCTS, []);
-        return collect($products);
+
+        $products = collect($products)->map(function ($product) {
+            return (object) $product;
+        });
+
+        return $products;
     }
 
     /**

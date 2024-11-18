@@ -3,7 +3,6 @@
 namespace Mahmudulhsn\ShoppingCart;
 
 use Illuminate\Support\ServiceProvider;
-use Mahmudulhsn\ShoppingCart\CartHelper;
 use Mahmudulhsn\ShoppingCart\Facades\CartFacade;
 use Mahmudulhsn\ShoppingCart\Repositories\SessionRepository;
 
@@ -14,20 +13,19 @@ class ShoppingCartServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Bind the session repository to the service container
+
         $this->app->singleton(SessionRepository::class, function ($app) {
-            return new SessionRepository();
+            return new SessionRepository;
         });
 
-        // Bind the 'cart' singleton with session repository and helper
         $this->app->singleton('cart', function ($app) {
-            $sessionRepository = $app->make(SessionRepository::class); // Get the SessionRepository instance
+            $sessionRepository = $app->make(SessionRepository::class);
             $rootSessionKey = $this->getRootSessionKey();
-            $this->initializeSession($sessionRepository, $rootSessionKey); // Pass the repository into initializeSession
-            return new Cart($sessionRepository, $rootSessionKey, new CartHelper);
+            $this->initializeSession($sessionRepository, $rootSessionKey);
+
+            return new Cart($sessionRepository, $rootSessionKey, new CartHelper(new SessionRepository));
         });
 
-        // Alias the 'cart' binding for easy access via facade
         $this->app->alias('cart', CartFacade::class);
     }
 
@@ -36,9 +34,9 @@ class ShoppingCartServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Publish the configuration file for customization
+
         $this->publishes([
-            __DIR__ . '/../config/shopping_cart.php' => config_path('shopping_cart.php'),
+            __DIR__.'/../config/shopping_cart.php' => config_path('shopping_cart.php'),
         ], 'lara-simple-shopping-cart-config');
     }
 
@@ -55,7 +53,7 @@ class ShoppingCartServiceProvider extends ServiceProvider
      */
     protected function initializeSession(SessionRepository $sessionRepository, string $rootSessionKey): void
     {
-        if (!$sessionRepository->get($rootSessionKey)) {
+        if (! $sessionRepository->get($rootSessionKey)) {
             $sessionRepository->put($rootSessionKey, [
                 'products' => [],
                 'discount_type' => 'fix',

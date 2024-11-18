@@ -2,18 +2,18 @@
 
 namespace Mahmudulhsn\ShoppingCart;
 
-use Illuminate\Contracts\Session\Session;
+use Mahmudulhsn\ShoppingCart\Repositories\SessionRepository;
 
 class CartHelper
 {
-    protected Session $session;
+    protected SessionRepository $session;
 
     /**
      * CartHelper constructor.
      *
-     * @param  Session  $session  Laravel session instance.
+     * @param  SessionRepository  $session  Laravel session instance.
      */
-    public function __construct(Session $session)
+    public function __construct(SessionRepository $session)
     {
         $this->session = $session;
     }
@@ -28,6 +28,7 @@ class CartHelper
     public function generateRowId(string $id, array $productDetails): string
     {
         ksort($productDetails);
+
         return md5($id . serialize($productDetails));
     }
 

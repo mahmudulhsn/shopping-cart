@@ -5,7 +5,6 @@ use Mahmudulhsn\ShoppingCart\CartHelper;
 use Mahmudulhsn\ShoppingCart\Data\ProductData;
 use Mahmudulhsn\ShoppingCart\Repositories\SessionRepository;
 
-
 it('adds a product to the cart', function () {
     $id = '123';
     $name = 'Product 1';
@@ -45,7 +44,7 @@ it('adds a product to the cart', function () {
                 'quantity' => $quantity,
                 'subtotal' => $quantity * $price,
                 'extraInfo' => $extraInfo,
-            ]
+            ],
         ])
         ->once();
 
@@ -104,7 +103,7 @@ it('updates a product in the cart', function () {
                 'quantity' => 2,
                 'subtotal' => 20.0,
                 'extraInfo' => ['color' => 'red'],
-            ]
+            ],
         ]);
 
     $cartHelper
@@ -131,7 +130,6 @@ it('updates a product in the cart', function () {
     $cart->update($rowId, $productData);
 });
 
-
 it('removes a product from the cart', function () {
     $rowId = 'rowId123';
 
@@ -154,7 +152,7 @@ it('removes a product from the cart', function () {
                 'quantity' => 2,
                 'subtotal' => 20.0,
                 'extraInfo' => ['color' => 'red'],
-            ]
+            ],
         ]);
 
     // Expect updateTotal to be called after product removal
@@ -172,7 +170,6 @@ it('removes a product from the cart', function () {
     // Call remove method to test
     $cart->remove($rowId);
 });
-
 
 it('clears the cart', function () {
     $sessionRepository = mock(SessionRepository::class);
@@ -199,7 +196,6 @@ it('clears the cart', function () {
     $cart->destroy();
 });
 
-
 it('retrieves the total amount of the cart', function () {
     $cartHelper = mock(CartHelper::class);
     $sessionRepository = mock(SessionRepository::class);
@@ -215,7 +211,6 @@ it('retrieves the total amount of the cart', function () {
 
     expect($total)->toBe(100.0);
 });
-
 
 it('applies a discount to the cart', function () {
     $amount = 20.0;
