@@ -6,16 +6,20 @@ use Illuminate\Contracts\Session\Session;
 
 class CartHelper
 {
-    protected $session;
+    protected Session $session;
 
-    // Inject the session repository into the constructor
+    /**
+     * CartHelper constructor.
+     *
+     * @param  Session  $session  Laravel session instance.
+     */
     public function __construct(Session $session)
     {
         $this->session = $session;
     }
 
     /**
-     * Generate a unique ID for the cart item based on product details.
+     * Generate a unique row ID for the cart item based on product details.
      *
      * @param  string  $id  Product ID.
      * @param  array  $productDetails  Details of the product to be hashed.
@@ -31,21 +35,20 @@ class CartHelper
      * Update the total amount of the cart and store it in the session.
      *
      * @param  string  $rootSessionKey  Root session key for the cart.
-     * @return int|float The updated total of the cart.
      */
-    public function updateTotal(string $rootSessionKey): int|float
+    public function updateTotal(string $rootSessionKey): void
     {
-        $cart = $this->session->get($rootSessionKey);
-        $products = $this->session->get("{$rootSessionKey}.products", []);
+        $products = $this->getSessionData("{$rootSessionKey}.products", []);
         $cartTotal = array_sum(array_column($products, 'subtotal'));
 
-        $this->session->put("{$rootSessionKey}.total", $cartTotal);
+        $this->session->put("{$rootSessionKey}.subtotal", $cartTotal);
 
-        return $this->session->get("{$rootSessionKey}.total");
+        $discount = $this->getSessionData("{$rootSessionKey}.discount", 0);
+        $this->session->put("{$rootSessionKey}.total", $cartTotal - $discount);
     }
 
     /**
-     * Update the discount amount for the cart based on discount type and amount.
+     * Update the discount amount for the cart based on the type and amount.
      *
      * @param  string  $rootSessionKey  Root session key for the cart.
      * @param  int|float  $amount  Discount amount to apply.
@@ -55,7 +58,7 @@ class CartHelper
      */
     public function updateDiscount(string $rootSessionKey, int|float $amount, ?string $discountType = 'fix'): void
     {
-        $total = $this->updateTotal($rootSessionKey);
+        $total = $this->getSessionData("{$rootSessionKey}.subtotal", 0);
         $discountAmount = 0;
 
         if ($discountType === 'percentage' && $amount <= 100) {
@@ -70,6 +73,38 @@ class CartHelper
 
         $this->session->put("{$rootSessionKey}.discount_type", $discountType);
         $this->session->put("{$rootSessionKey}.discount", $discountAmount);
-        $this->session->put("{$rootSessionKey}.subtotal", $discountedTotal);
+        $this->session->put("{$rootSessionKey}.total", $discountedTotal);
+    }
+
+    /**
+     * Retrieve session data with a default value.
+     *
+     * @param  string  $key  Session key.
+     * @param  mixed  $default  Default value if key does not exist.
+     * @return mixed Session data.
+     */
+    public function getSessionData(string $key, $default = null)
+    {
+        return $this->session->get($key, $default);
+    }
+
+    /**
+     * Update product data in the session.
+     *
+     * @param  array  &$products  Reference to the products array.
+     * @param  string  $rowId  Row ID of the product.
+     * @param  int|float  $quantity  Product quantity.
+     * @param  float  $price  Product price.
+     * @param  array|null  $extraInfo  Additional product info.
+     */
+    public function updateProductData(array &$products, string $rowId, int|float $quantity, float $price, ?array $extraInfo = null): void
+    {
+        $products[$rowId]['price'] = $price;
+        $products[$rowId]['quantity'] = $quantity;
+        $products[$rowId]['subtotal'] = $quantity * $price;
+
+        if (!empty($extraInfo)) {
+            $products[$rowId]['extraInfo'] = $extraInfo;
+        }
     }
 }
