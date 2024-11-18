@@ -25,7 +25,7 @@ class CartHelper
      * @param  array  $productDetails  Details of the product to be hashed.
      * @return string Unique row ID for the product.
      */
-    public function generateRowId(string $id, array $productDetails): string
+    public function generateRowId($id, $productDetails): string
     {
         ksort($productDetails);
 
@@ -37,7 +37,7 @@ class CartHelper
      *
      * @param  string  $rootSessionKey  Root session key for the cart.
      */
-    public function updateTotal(string $rootSessionKey): void
+    public function updateTotal($rootSessionKey): void
     {
         $products = $this->getSessionData("{$rootSessionKey}.products", []);
         $cartTotal = array_sum(array_column($products, 'subtotal'));
@@ -57,7 +57,7 @@ class CartHelper
      *
      * @throws \Exception If discount information is invalid.
      */
-    public function updateDiscount(string $rootSessionKey, int|float $amount, ?string $discountType = 'fix'): void
+    public function updateDiscount($rootSessionKey, $amount, $discountType = 'fix'): void
     {
         $total = $this->getSessionData("{$rootSessionKey}.subtotal", 0);
         $discountAmount = 0;
@@ -84,7 +84,7 @@ class CartHelper
      * @param  mixed  $default  Default value if key does not exist.
      * @return mixed Session data.
      */
-    public function getSessionData(string $key, $default = null)
+    public function getSessionData($key, $default = null)
     {
         return $this->session->get($key, $default);
     }
@@ -98,7 +98,7 @@ class CartHelper
      * @param  float  $price  Product price.
      * @param  array|null  $extraInfo  Additional product info.
      */
-    public function updateProductData(array &$products, string $rowId, int|float $quantity, float $price, ?array $extraInfo = null): void
+    public function updateProductData(array &$products, $rowId, $quantity, $price, $extraInfo = null): void
     {
         $products[$rowId]['price'] = $price;
         $products[$rowId]['quantity'] = $quantity;
